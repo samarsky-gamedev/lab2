@@ -1,26 +1,21 @@
-"""ЛР 2: почтовые индексы. Запуск: python main.py; тесты: main.py --test."""
-
 import re
 import sys
 import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-PATTERN = re.compile(r"\b[0-9]{6}\b")  # Границы слова и ровно шесть цифр.
+PATTERN = re.compile(r"\b[0-9]{6}\b")
 
 
 def is_index(value: str) -> bool:
-    """Проверяет формат: ровно шесть цифр от 0 до 9."""
     return PATTERN.fullmatch(value) is not None
 
 
 def find_indices(text: str) -> list[str]:
-    """Ищет отдельные шестизначные записи, сохраняя порядок и повторы."""
     return PATTERN.findall(text)
 
 
 def find_in_file(path: str) -> list[str]:
-    """Читает UTF-8, включая файлы с начальной меткой BOM."""
     return find_indices(Path(path).read_text(encoding="utf-8-sig"))
 
 
