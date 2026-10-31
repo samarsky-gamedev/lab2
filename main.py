@@ -1,4 +1,4 @@
-"""Лабораторная работа 2. Вариант 5: почтовые индексы России."""
+"""ЛР 2: почтовые индексы. Запуск: python main.py; тесты: main.py --test."""
 
 import re
 import sys
@@ -6,7 +6,7 @@ import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-PATTERN = re.compile(r"\b[0-9]{6}\b")
+PATTERN = re.compile(r"\b[0-9]{6}\b")  # Границы слова и ровно шесть цифр.
 
 
 def is_index(value: str) -> bool:
@@ -20,11 +20,12 @@ def find_indices(text: str) -> list[str]:
 
 
 def find_in_file(path: str) -> list[str]:
-    return find_indices(Path(path).read_text(encoding="utf-8"))
+    """Читает UTF-8, включая файлы с начальной меткой BOM."""
+    return find_indices(Path(path).read_text(encoding="utf-8-sig"))
 
 
 def main() -> None:
-    print("Проверяется формат индекса, а не существование почтового отделения.")
+    print("Проверяется только формат индекса: шесть цифр.")
     while True:
         try:
             print("\n1 Проверить; 2 Найти в тексте; 3 Найти в файле; 0 Выход")
@@ -32,8 +33,8 @@ def main() -> None:
             if choice == "0":
                 break
             if choice == "1":
-                value = input("Индекс: ")
-                print("Верный формат." if is_index(value) else "Неверный формат.")
+                valid = is_index(input("Индекс: "))
+                print("Верный формат." if valid else "Неверный формат.")
                 continue
             if choice == "2":
                 matches = find_indices(input("Текст: "))
@@ -105,6 +106,24 @@ class TestPostalIndex(unittest.TestCase):
         with TemporaryDirectory() as folder:
             with self.assertRaises(FileNotFoundError):
                 find_in_file(str(Path(folder) / "missing.txt"))
+
+    def test_file_with_bom(self) -> None:
+        with TemporaryDirectory() as folder:
+            path = Path(folder) / "bom.txt"
+            path.write_text("101000 и 190000", encoding="utf-8-sig")
+            self.assertEqual(find_in_file(str(path)), ["101000", "190000"])
+
+    def test_file_with_wrong_encoding(self) -> None:
+        with TemporaryDirectory() as folder:
+            path = Path(folder) / "bad.txt"
+            path.write_bytes(b"\xff\xfe\xff")
+            with self.assertRaises(UnicodeError):
+                find_in_file(str(path))
+
+    def test_directory_instead_of_file(self) -> None:
+        with TemporaryDirectory() as folder:
+            with self.assertRaises(OSError):
+                find_in_file(folder)
 
 
 if __name__ == "__main__":
